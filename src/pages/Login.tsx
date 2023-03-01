@@ -1,15 +1,15 @@
-import React from 'react';
+import React, {FC} from 'react';
 import {Card, Layout, Row} from "antd";
-import './../App.css'
 import LoginForm from "../components/LoginForm";
-const Login = () => {
+
+const Login: FC = () => {
     return (
         <Layout>
-        <Row justify={"center"} align={"middle"} className={"h100"}>
-            <Card>
-                <LoginForm/>
-            </Card>
-        </Row>
+            <Row justify="center" align="middle" className="h100">
+                <Card>
+                    <LoginForm/>
+                </Card>
+            </Row>
         </Layout>
     );
 };

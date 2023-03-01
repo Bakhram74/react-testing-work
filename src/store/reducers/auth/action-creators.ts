@@ -1,36 +1,38 @@
+import {AuthActionEnum, SetAuthAction, SetErrorAction, SetIsLoadingAction, SetUserAction} from "./types";
 import {IUser} from "../../../models/IUser";
-import {AuthActionEnum} from "./types";
-import {AppDispatch} from "../../store";
+import {AppDispatch} from "../../index";
 import axios from "axios";
+import UserService from "../../../api/UserService";
 
 export const AuthActionCreators = {
-    setIsAuth: (auth: boolean) => ({type: AuthActionEnum.SET_AUTH, payload: auth}),
-    setUser: (user: IUser) => ({type: AuthActionEnum.SET_USER, payload: user}),
-    setIsLoading: (isLoading: boolean) => ({type: AuthActionEnum.SET_IS_LOADING, payload: isLoading}),
-    setError: (error: string) => ({type: AuthActionEnum.SET_ERROR, payload: error}),
-    login: (userName: string, password: string) =>(dispatch: AppDispatch) => {
+    setUser: (user: IUser): SetUserAction => ({type: AuthActionEnum.SET_USER, payload: user}),
+    setIsAuth: (auth: boolean): SetAuthAction => ({type: AuthActionEnum.SET_AUTH, payload: auth}),
+    setIsLoading: (payload: boolean): SetIsLoadingAction => ({type: AuthActionEnum.SET_IS_LOADING, payload}),
+    setError: (payload: string): SetErrorAction => ({type: AuthActionEnum.SET_ERROR, payload}),
+    login: (username: string, password: string) => async (dispatch: AppDispatch) => {
         try {
-            dispatch(AuthActionCreators.setIsLoading(true))
+            dispatch(AuthActionCreators.setIsLoading(true));
             setTimeout(async () => {
-                const response = await axios.get<IUser[]>('./users.json')
-                const mockUsers = response.data.find(user => user.userName === userName && user.password === password)
-                if (mockUsers) {
-                    localStorage.setItem('auth', 'true')
-                    localStorage.setItem('userName', mockUsers.userName)
+                const response = await UserService.getUsers()
+                const mockUser = response.data.find(user => user.username === username && user.password === password);
+                if (mockUser) {
+                    localStorage.setItem('auth', 'true');
+                    localStorage.setItem('username', mockUser.username);
+                    dispatch(AuthActionCreators.setUser(mockUser));
                     dispatch(AuthActionCreators.setIsAuth(true))
-                    dispatch(AuthActionCreators.setUser(mockUsers))
                 } else {
-                    dispatch(AuthActionCreators.setError("Not correct login or email"))
+                    dispatch(AuthActionCreators.setError('Некорректный логин или пароль'));
                 }
-            },3000)
+                dispatch(AuthActionCreators.setIsLoading(false));
+            }, 1000)
         } catch (e) {
-            dispatch(AuthActionCreators.setError("Error on login"))
+            dispatch(AuthActionCreators.setError('Произошла ошибка при логине'))
         }
     },
-    loginOut: () =>(dispatch: AppDispatch) =>{
+    logout: () => async (dispatch: AppDispatch) => {
         localStorage.removeItem('auth')
-        localStorage.removeItem('userName')
+        localStorage.removeItem('username')
+        dispatch(AuthActionCreators.setUser({} as IUser));
         dispatch(AuthActionCreators.setIsAuth(false))
-        dispatch(AuthActionCreators.setUser({} as IUser))
     }
 }
